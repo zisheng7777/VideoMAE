@@ -554,3 +554,4 @@ class VideoMAE(torch.utils.data.Dataset):
         except:
             raise RuntimeError('Error occured in reading frames {} from video {} of duration {}.'.format(frame_id_list, directory, duration))
         return sampled_list
+

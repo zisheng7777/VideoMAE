@@ -4,6 +4,13 @@ from transforms import *
 from masking_generator import TubeMaskingGenerator
 from kinetics import VideoClsDataset, VideoMAE
 from ssv2 import SSVideoClsDataset
+from csvdata import CSVMAE
+
+import torch
+from torchvision import transforms
+from masking_generator import TubeMaskingGenerator
+from transforms import Stack, ToTorchFormatTensor
+
 
 
 class DataAugmentationForVideoMAE(object):
@@ -34,24 +41,33 @@ class DataAugmentationForVideoMAE(object):
         repr += ")"
         return repr
 
+# def build_pretraining_dataset(args):
+#     transform = DataAugmentationForVideoMAE(args)
+#     dataset = VideoMAE(
+#         root=None,
+#         setting=args.data_path,
+#         video_ext='mp4',
+#         is_color=True,
+#         modality='rgb',
+#         new_length=args.num_frames,
+#         new_step=args.sampling_rate,
+#         transform=transform,
+#         temporal_jitter=False,
+#         video_loader=True,
+#         use_decord=True,
+#         lazy_init=False)
+#     # print("Data Aug = %s" % str(transform))
+    # return dataset
+
 
 def build_pretraining_dataset(args):
-    transform = DataAugmentationForVideoMAE(args)
-    dataset = VideoMAE(
-        root=None,
-        setting=args.data_path,
-        video_ext='mp4',
-        is_color=True,
-        modality='rgb',
-        new_length=args.num_frames,
-        new_step=args.sampling_rate,
-        transform=transform,
-        temporal_jitter=False,
-        video_loader=True,
-        use_decord=True,
-        lazy_init=False)
-    print("Data Aug = %s" % str(transform))
+    dataset = CSVMAE(
+        root_dir=args.data_path,
+        num_frames=args.num_frames,
+        mask_ratio=args.mask_ratio,
+    )
     return dataset
+
 
 
 def build_dataset(is_train, test_mode, args):

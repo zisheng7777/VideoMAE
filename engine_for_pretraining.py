@@ -31,15 +31,20 @@ def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: to
                     param_group["weight_decay"] = wd_schedule_values[it]
 
         videos, bool_masked_pos = batch
+        print(f"DEBUG: bool_masked_pos.shape = {bool_masked_pos.shape}")
+        print(f"DEBUG: videos.shape = {videos.shape}")
+
+        
         videos = videos.to(device, non_blocking=True)
         bool_masked_pos = bool_masked_pos.to(device, non_blocking=True).flatten(1).to(torch.bool)
-
+        
         with torch.no_grad():
             # calculate the predict label
-            mean = torch.as_tensor(IMAGENET_DEFAULT_MEAN).to(device)[None, :, None, None, None]
-            std = torch.as_tensor(IMAGENET_DEFAULT_STD).to(device)[None, :, None, None, None]
-            unnorm_videos = videos * std + mean  # in [0, 1]
-
+            # mean = torch.as_tensor(IMAGENET_DEFAULT_MEAN).to(device)[None, :, None, None, None]
+            # std = torch.as_tensor(IMAGENET_DEFAULT_STD).to(device)[None, :, None, None, None]
+            # unnorm_videos = videos * std + mean  # in [0, 1]
+            unnorm_videos = videos
+            print(f"DEBUG: unnorm_videos.shape = {unnorm_videos.shape}")
             if normlize_target:
                 videos_squeeze = rearrange(unnorm_videos, 'b c (t p0) (h p1) (w p2) -> b (t h w) (p0 p1 p2) c', p0=2, p1=patch_size, p2=patch_size)
                 videos_norm = (videos_squeeze - videos_squeeze.mean(dim=-2, keepdim=True)
@@ -50,6 +55,11 @@ def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: to
                 videos_patch = rearrange(unnorm_videos, 'b c (t p0) (h p1) (w p2) -> b (t h w) (p0 p1 p2 c)', p0=2, p1=patch_size, p2=patch_size)
 
             B, _, C = videos_patch.shape
+
+            print(f"B:{B}")
+            print(f"C:{C}")
+            print(f"DEBUG: bool_masked_pos.shape = {bool_masked_pos.shape}")
+            print(f"DEBUG: videos_patch.shape = {videos_patch.shape}")
             labels = videos_patch[bool_masked_pos].reshape(B, -1, C)
 
         with torch.cuda.amp.autocast():
@@ -102,4 +112,5 @@ def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: to
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
     print("Averaged stats:", metric_logger)
+    
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}

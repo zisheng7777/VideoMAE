@@ -20,17 +20,19 @@ __all__ = [
     'pretrain_videomae_base_patch16_224', 
     'pretrain_videomae_large_patch16_224', 
     'pretrain_videomae_huge_patch16_224',
+    'pretrain_videomae_base_patch1_4',
 ]
 
 
 class PretrainVisionTransformerEncoder(nn.Module):
     """ Vision Transformer with support for patch or hybrid CNN input stage
     """
-    def __init__(self, img_size=224, patch_size=16, in_chans=3, num_classes=0, embed_dim=768, depth=12,
+    def __init__(self, img_size=224, patch_size=16, in_chans=1, num_classes=0, embed_dim=768, depth=12,
                  num_heads=12, mlp_ratio=4., qkv_bias=False, qk_scale=None, drop_rate=0., attn_drop_rate=0.,
                  drop_path_rate=0., norm_layer=nn.LayerNorm, init_values=None, tubelet_size=2, use_checkpoint=False,
                  use_learnable_pos_emb=False):
         super().__init__()
+
         self.num_classes = num_classes
         self.num_features = self.embed_dim = embed_dim  # num_features for consistency with other models
         self.patch_embed = PatchEmbed(
@@ -112,13 +114,13 @@ class PretrainVisionTransformerEncoder(nn.Module):
 class PretrainVisionTransformerDecoder(nn.Module):
     """ Vision Transformer with support for patch or hybrid CNN input stage
     """
-    def __init__(self, patch_size=16, num_classes=768, embed_dim=768, depth=12, num_heads=12, mlp_ratio=4.,
+    def __init__(self, patch_size=16, num_classes=384, embed_dim=768, depth=12, num_heads=12, mlp_ratio=4.,
                  qkv_bias=False, qk_scale=None, drop_rate=0., attn_drop_rate=0., drop_path_rate=0.,
                  norm_layer=nn.LayerNorm, init_values=None, num_patches=196, tubelet_size=2, use_checkpoint=False
                  ):
         super().__init__()
         self.num_classes = num_classes
-        assert num_classes == 3 * tubelet_size * patch_size ** 2 
+        assert num_classes == 1 * tubelet_size * patch_size ** 2 
         self.num_features = self.embed_dim = embed_dim  # num_features for consistency with other models
         self.patch_size = patch_size
         self.use_checkpoint = use_checkpoint
@@ -181,7 +183,7 @@ class PretrainVisionTransformer(nn.Module):
     def __init__(self,
                  img_size=224, 
                  patch_size=16, 
-                 encoder_in_chans=3, 
+                 encoder_in_chans=1, 
                  encoder_num_classes=0, 
                  encoder_embed_dim=768, 
                  encoder_depth=12,
@@ -331,6 +333,30 @@ def pretrain_videomae_base_patch16_224(pretrained=False, **kwargs):
         model.load_state_dict(checkpoint["model"])
     return model
  
+@register_model
+def pretrain_videomae_base_patch1_4(pretrained=False, **kwargs):
+    model = PretrainVisionTransformer(
+        img_size=4,
+        patch_size=1, 
+        encoder_embed_dim=768, 
+        encoder_depth=12, 
+        encoder_num_heads=12,
+        encoder_num_classes=0,
+        decoder_num_classes=2,
+        decoder_embed_dim=384,
+        decoder_num_heads=6,
+        mlp_ratio=4, 
+        qkv_bias=True,
+        norm_layer=partial(nn.LayerNorm, eps=1e-6), 
+        **kwargs)
+    model.default_cfg = _cfg()
+    if pretrained:
+        checkpoint = torch.load(
+            kwargs["init_ckpt"], map_location="cpu"
+        )
+        model.load_state_dict(checkpoint["model"])
+    return model
+
 @register_model
 def pretrain_videomae_large_patch16_224(pretrained=False, **kwargs):
     model = PretrainVisionTransformer(
