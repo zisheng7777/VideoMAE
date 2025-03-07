@@ -489,7 +489,10 @@ class VideoMAE(torch.utils.data.Dataset):
 
         process_data, mask = self.transform((images, None)) # T*C,H,W
         process_data = process_data.view((self.new_length, 3) + process_data.size()[-2:]).transpose(0,1)  # T*C,H,W -> T,C,H,W -> C,T,H,W
-        
+        print('-------------------------------')
+        print(f"From Dataloader Debug: process_data shape: {process_data.shape}")
+        print(f"From Dataloader Debug: mask shape: {mask.shape}")
+        print('-------------------------------')
         return (process_data, mask)
 
     def __len__(self):

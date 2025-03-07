@@ -31,6 +31,10 @@ def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: to
                     param_group["weight_decay"] = wd_schedule_values[it]
 
         videos, bool_masked_pos = batch
+        print('-------------------------------')
+        print(f"From Batch Debug: videos_patch shape: {videos.shape}")
+        print(f"From Batch Debug: bool_masked_pos shape: {bool_masked_pos.shape}")
+        print('-------------------------------')
         videos = videos.to(device, non_blocking=True)
         bool_masked_pos = bool_masked_pos.to(device, non_blocking=True).flatten(1).to(torch.bool)
 
@@ -50,6 +54,10 @@ def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: to
                 videos_patch = rearrange(unnorm_videos, 'b c (t p0) (h p1) (w p2) -> b (t h w) (p0 p1 p2 c)', p0=2, p1=patch_size, p2=patch_size)
 
             B, _, C = videos_patch.shape
+            print('-------------------------------')
+            print(f"Debug: videos_patch shape: {videos_patch.shape}")
+            print(f"Debug: bool_masked_pos shape: {bool_masked_pos.shape}")
+            print('-------------------------------')
             labels = videos_patch[bool_masked_pos].reshape(B, -1, C)
 
         with torch.cuda.amp.autocast():

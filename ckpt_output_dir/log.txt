@@ -1,0 +1,5 @@
+{"train_lr": 0.0, "train_min_lr": 0.0, "train_loss": 1.372048020362854, "train_loss_scale": 65536.0, "train_weight_decay": 0.05, "train_grad_norm": 1.1863749027252197, "epoch": 0, "n_parameters": 94210944}
+{"train_lr": 1.2019230769230769e-07, "train_min_lr": 1.2019230769230769e-07, "train_loss": 1.1609389781951904, "train_loss_scale": 65536.0, "train_weight_decay": 0.05, "train_grad_norm": 1.0841091871261597, "epoch": 1, "n_parameters": 94210944}
+{"train_lr": 2.4038461538461537e-07, "train_min_lr": 2.4038461538461537e-07, "train_loss": 1.4238512516021729, "train_loss_scale": 65536.0, "train_weight_decay": 0.05, "train_grad_norm": 1.219990611076355, "epoch": 2, "n_parameters": 94210944}
+{"train_lr": 0.0, "train_min_lr": 0.0, "train_loss": 1.372048020362854, "train_loss_scale": 65536.0, "train_weight_decay": 0.05, "train_grad_norm": 1.1863749027252197, "epoch": 0, "n_parameters": 94210944}
+{"train_lr": 0.0, "train_min_lr": 0.0, "train_loss": 1.372048020362854, "train_loss_scale": 65536.0, "train_weight_decay": 0.05, "train_grad_norm": 1.1863749027252197, "epoch": 0, "n_parameters": 94210944}
