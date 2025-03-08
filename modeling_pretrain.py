@@ -38,14 +38,16 @@ class PretrainVisionTransformerEncoder(nn.Module):
         self.patch_embed = PatchEmbed(
             img_size=img_size, patch_size=patch_size, in_chans=in_chans, embed_dim=embed_dim,tubelet_size=tubelet_size)
         num_patches = self.patch_embed.num_patches
+        
         self.use_checkpoint = use_checkpoint
-
+ 
 
         # TODO: Add the cls token
         if use_learnable_pos_emb:
             self.pos_embed = nn.Parameter(torch.zeros(1, num_patches + 1, embed_dim))
         else:
             # sine-cosine positional embeddings 
+
             self.pos_embed = get_sinusoid_encoding_table(num_patches, embed_dim)
 
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule

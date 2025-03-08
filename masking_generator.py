@@ -21,5 +21,4 @@ class TubeMaskingGenerator:
         ])
         np.random.shuffle(mask_per_frame)
         mask = np.tile(mask_per_frame, (self.frames,1)).flatten()
-
         return mask 

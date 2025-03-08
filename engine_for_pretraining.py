@@ -31,20 +31,24 @@ def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: to
                     param_group["weight_decay"] = wd_schedule_values[it]
 
         videos, bool_masked_pos = batch
-        print(f"DEBUG: bool_masked_pos.shape = {bool_masked_pos.shape}")
-        print(f"DEBUG: videos.shape = {videos.shape}")
-
+        # print('-------------------------------')
+        # print(f"From Batch Debug: videos_patch shape: {videos.shape}")
+        # print(f"From Batch Debug: bool_masked_pos shape: {bool_masked_pos.shape}")
+        # print('-------------------------------')
         
         videos = videos.to(device, non_blocking=True)
         bool_masked_pos = bool_masked_pos.to(device, non_blocking=True).flatten(1).to(torch.bool)
-        
+        if torch.isnan(videos).any() or torch.isinf(videos).any():
+            print("❌ NaN or Inf detected in input videos!")
+            videos = torch.nan_to_num(videos)  # 自動將 NaN 轉為 0，Inf 轉為最大/最小值
+
         with torch.no_grad():
             # calculate the predict label
             # mean = torch.as_tensor(IMAGENET_DEFAULT_MEAN).to(device)[None, :, None, None, None]
             # std = torch.as_tensor(IMAGENET_DEFAULT_STD).to(device)[None, :, None, None, None]
             # unnorm_videos = videos * std + mean  # in [0, 1]
             unnorm_videos = videos
-            print(f"DEBUG: unnorm_videos.shape = {unnorm_videos.shape}")
+            # print(f"DEBUG: unnorm_videos.shape = {unnorm_videos.shape}")
             if normlize_target:
                 videos_squeeze = rearrange(unnorm_videos, 'b c (t p0) (h p1) (w p2) -> b (t h w) (p0 p1 p2) c', p0=2, p1=patch_size, p2=patch_size)
                 videos_norm = (videos_squeeze - videos_squeeze.mean(dim=-2, keepdim=True)
@@ -56,13 +60,14 @@ def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: to
 
             B, _, C = videos_patch.shape
 
-            print(f"B:{B}")
-            print(f"C:{C}")
-            print(f"DEBUG: bool_masked_pos.shape = {bool_masked_pos.shape}")
-            print(f"DEBUG: videos_patch.shape = {videos_patch.shape}")
+            # print('-------------------------------')
+            # print(f"Debug: videos_patch shape: {videos_patch.shape}")
+            # print(f"Debug: bool_masked_pos shape: {bool_masked_pos.shape}")
+            # print('-------------------------------')
+
             labels = videos_patch[bool_masked_pos].reshape(B, -1, C)
 
-        with torch.cuda.amp.autocast():
+        with torch.amp.autocast(device_type="cuda", dtype=torch.float32):
             outputs = model(videos, bool_masked_pos)
             loss = loss_func(input=outputs, target=labels)
 

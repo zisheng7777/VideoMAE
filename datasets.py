@@ -65,6 +65,7 @@ def build_pretraining_dataset(args):
         root_dir=args.data_path,
         num_frames=args.num_frames,
         mask_ratio=args.mask_ratio,
+        window_size=args.window_size
     )
     return dataset
 

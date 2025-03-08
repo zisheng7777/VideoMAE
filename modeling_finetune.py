@@ -134,15 +134,17 @@ class Block(nn.Module):
 class PatchEmbed(nn.Module):
     """ Image to Patch Embedding
     """
-    def __init__(self, img_size=224, patch_size=16, in_chans=3, embed_dim=768, num_frames=16, tubelet_size=2):
+    def __init__(self, img_size=4, patch_size=1, in_chans=1, embed_dim=768, num_frames=16, tubelet_size=2):
         super().__init__()
         img_size = to_2tuple(img_size)
         patch_size = to_2tuple(patch_size)
         self.tubelet_size = int(tubelet_size)
         num_patches = (img_size[1] // patch_size[1]) * (img_size[0] // patch_size[0]) * (num_frames // self.tubelet_size)
+
         self.img_size = img_size
         self.patch_size = patch_size
         self.num_patches = num_patches
+
         self.proj = nn.Conv3d(in_channels=in_chans, out_channels=embed_dim, 
                             kernel_size = (self.tubelet_size,  patch_size[0],patch_size[1]), 
                             stride=(self.tubelet_size,  patch_size[0],  patch_size[1]))
@@ -176,7 +178,7 @@ class VisionTransformer(nn.Module):
     def __init__(self, 
                  img_size=224, 
                  patch_size=16, 
-                 in_chans=3, 
+                 in_chans=1, 
                  num_classes=1000, 
                  embed_dim=768, 
                  depth=12,
@@ -343,6 +345,14 @@ def vit_large_patch16_512(pretrained=False, **kwargs):
 def vit_huge_patch16_224(pretrained=False, **kwargs):
     model = VisionTransformer(
         patch_size=16, embed_dim=1280, depth=32, num_heads=16, mlp_ratio=4, qkv_bias=True,
+        norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
+    model.default_cfg = _cfg()
+    return model
+
+@register_model
+def vit_base_patch1_4(pretrained=False, **kwargs):
+    model = VisionTransformer(
+        patch_size=1, embed_dim=768, depth=12, num_heads=12, mlp_ratio=4, qkv_bias=True,
         norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
     model.default_cfg = _cfg()
     return model
