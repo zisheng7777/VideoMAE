@@ -39,8 +39,7 @@ def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: to
         videos = videos.to(device, non_blocking=True)
         bool_masked_pos = bool_masked_pos.to(device, non_blocking=True).flatten(1).to(torch.bool)
         if torch.isnan(videos).any() or torch.isinf(videos).any():
-            print("❌ NaN or Inf detected in input videos!")
-            videos = torch.nan_to_num(videos)  # 自動將 NaN 轉為 0，Inf 轉為最大/最小值
+            print("NaN or Inf detected in input videos!")
 
         with torch.no_grad():
             # calculate the predict label
@@ -55,8 +54,10 @@ def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: to
                     ) / (videos_squeeze.var(dim=-2, unbiased=True, keepdim=True).sqrt() + 1e-6)
                 # we find that the mean is about 0.48 and standard deviation is about 0.08.
                 videos_patch = rearrange(videos_norm, 'b n p c -> b n (p c)')
+               
             else:
                 videos_patch = rearrange(unnorm_videos, 'b c (t p0) (h p1) (w p2) -> b (t h w) (p0 p1 p2 c)', p0=2, p1=patch_size, p2=patch_size)
+                
 
             B, _, C = videos_patch.shape
 
@@ -69,7 +70,15 @@ def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: to
 
         with torch.amp.autocast(device_type="cuda", dtype=torch.float32):
             outputs = model(videos, bool_masked_pos)
-            loss = loss_func(input=outputs, target=labels)
+            # 取出 Masked Patch
+            B, _, C = videos_patch.shape
+            labels = videos_patch[bool_masked_pos].reshape(B, -1, C)
+            outputs = outputs.reshape(B, -1, C)
+
+            # 只計算 Masked Patch 的 Loss
+            loss = (outputs - labels) ** 2
+            loss = loss.mean(dim=-1)  # 針對每個 Masked Patch 計算 Loss
+            loss = loss.mean()  # 取所有 Masked Patch 的平均 Loss
 
         loss_value = loss.item()
 
